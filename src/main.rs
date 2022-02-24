@@ -14,7 +14,8 @@ enum BSCApiResponseType {
 #[serde(rename_all = "camelCase")]  // source JSON response is in camelCase except
                                     // 'txreceipt_status' which we explicitly `rename` it.
 struct BSCNormalTransactionResponseSuccessVariantResult {
-    block_number: u32,
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    block_number: u64,
 
     #[serde(deserialize_with = "de_string_to_numeric")]
     time_stamp: u128,    
@@ -59,10 +60,11 @@ struct BSCNormalTransactionResponseSuccessVariantResult {
     confirmations: u32,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct BSCInternalTransactionResponseSuccessVariantResult {
-    block_number: u32,
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    block_number: u64,
 
     #[serde(deserialize_with = "de_string_to_numeric")]
     time_stamp: u128,
@@ -81,7 +83,7 @@ struct BSCInternalTransactionResponseSuccessVariantResult {
     input: String,
 
     // this is how to escape reserved keyword to use as identifier
-    r#type: String,
+    r#type: Option<String>,
 
     #[serde(deserialize_with = "de_string_to_numeric")]
     gas: u64,
@@ -89,12 +91,12 @@ struct BSCInternalTransactionResponseSuccessVariantResult {
     #[serde(deserialize_with = "de_string_to_numeric")]
     gas_used: u64,
 
-    trace_id: String,
+    trace_id: Option<String>,
 
     #[serde(deserialize_with = "de_string_to_bool")]
     is_error: bool,
 
-    err_code: String
+    err_code: Option<String>
 }
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -112,22 +114,37 @@ struct BSCTransactionResponse<T> {
 }
 
 trait CompatibleTransactionResponse<T> {
-    fn status(&self) -> String;
-    fn message(&self) -> String;
+    fn status(&self) -> &str;
+    fn message(&self) -> &str;
     fn result(&self) -> GenericBSCTransactionResponseResult::<T>;
 }
 
 impl CompatibleTransactionResponse<BSCNormalTransactionResponseSuccessVariantResult> for BSCTransactionResponse<BSCNormalTransactionResponseSuccessVariantResult>
 {
-    fn status(&self) -> String {
-        self.status.to_owned()
+    fn status(&self) -> &str {
+        &self.status
     }
 
-    fn message(&self) -> String {
-        self.message.to_owned()
+    fn message(&self) -> &str {
+        &self.message
     }
 
     fn result(&self) -> GenericBSCTransactionResponseResult::<BSCNormalTransactionResponseSuccessVariantResult> {
+        self.result.clone()
+    }
+}
+
+impl CompatibleTransactionResponse<BSCInternalTransactionResponseSuccessVariantResult> for BSCTransactionResponse<BSCInternalTransactionResponseSuccessVariantResult>
+{
+    fn status(&self) -> &str {
+        &self.status
+    }
+
+    fn message(&self) -> &str {
+        &self.message
+    }
+
+    fn result(&self) -> GenericBSCTransactionResponseResult::<BSCInternalTransactionResponseSuccessVariantResult> {
         self.result.clone()
     }
 }
@@ -247,6 +264,14 @@ fn get_list_normal_transactions(address: &str) -> Result<Vec::<BSCNormalTransact
     get_list_transactions::<ResultType, JsonType>(BSCApiResponseType::NormalTransaction, address)
 }
 
+fn get_list_internal_transactions(address: &str) -> Result<Vec::<BSCInternalTransactionResponseSuccessVariantResult>, AppError>
+{
+    type ResultType = BSCInternalTransactionResponseSuccessVariantResult;
+    type JsonType = BSCTransactionResponse::<ResultType>;
+
+    get_list_transactions::<ResultType, JsonType>(BSCApiResponseType::InternalTransaction, address)
+}
+
 fn get_list_transactions<R, J>(api_req_type: BSCApiResponseType, address: &str) -> Result<Vec::<R>, AppError>
 where
     R: serde::de::DeserializeOwned,
@@ -263,9 +288,10 @@ where
     let api_key = std::env::var("HX_INOUTFLOW_API_KEY")?;
 
     while is_need_next_page {
+        // beware to always use fully qualified here for type of api_req_type
         let action = match &api_req_type {
-            NormalTransaction => "txlist",
-            InternalTransaction => "txlistinternal"
+            BSCApiResponseType::NormalTransaction => "txlist",
+            BSCApiResponseType::InternalTransaction => "txlistinternal"
         };
         let raw_url_str = format!("https://api.bscscan.com/api?module=account&action={action}&address={target_address}&startblock=0&endblock=99999999&page={page}&offset={offset}&sort=asc&apikey={api_key}", action=action, target_address=address, api_key=api_key, page=page_number, offset=OFFSET);
 
@@ -348,25 +374,65 @@ fn main() {
     let mut target_address = args[1].to_owned();
     target_address.make_ascii_lowercase();
 
-    let txs_res = get_list_normal_transactions(target_address.as_str());
-    if let Err(e) = txs_res {
-        eprintln!("{}", e);
-        std::process::exit(1);
+    // FIXME: might use U256 to make it super accurate
+    let mut bnb_balance: f64 = 0_f64;;
+
+    // get normal transactions
+    {
+        let txs_res = get_list_normal_transactions(target_address.as_str());
+        if let Err(e) = txs_res {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
+
+        if let Ok(txs) = txs_res {
+            let bnb_outflow: U256 = txs.iter().filter(|tx| tx.from == target_address).fold(U256::zero(), |acc, tx| acc + tx.value);
+            let bnb_inflow: U256 = txs.iter().filter(|tx| tx.to == target_address).fold(U256::zero(), |acc, tx| acc + tx.value);
+
+            let scale = 10_f64.powf(18.0);
+
+            let bnb_outflow_f = bnb_outflow.to_f64_lossy() / scale;
+            let bnb_inflow_f = bnb_inflow.to_f64_lossy() / scale;
+
+            // add feature "fp-conversion" for primitive-types crate to use to_f64_lossy()
+            println!("Found {} transactions!", txs.len());
+            println!("- BNB outflow: {} BNBs", bnb_outflow_f);
+            println!("- BNB inflow: {} BNBs", bnb_inflow_f);
+            println!("- BNB balance: {} BNBs", bnb_inflow_f - bnb_outflow_f);
+
+            bnb_balance = bnb_inflow_f - bnb_outflow_f;
+        }
     }
 
-    if let Ok(txs) = txs_res {
-        let bnb_outflow: U256 = txs.iter().filter(|tx| tx.from == target_address).fold(U256::zero(), |acc, tx| acc + tx.value);
-        let bnb_inflow: U256 = txs.iter().filter(|tx| tx.to == target_address).fold(U256::zero(), |acc, tx| acc + tx.value);
+    println!("");
 
-        let scale = 10_f64.powf(18.0);
+    // get internal transactions
+    {
+        let txs_res = get_list_internal_transactions(target_address.as_str());
+        if let Err(e) = txs_res {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
 
-        let bnb_outflow_f = bnb_outflow.to_f64_lossy() / scale;
-        let bnb_inflow_f = bnb_inflow.to_f64_lossy() / scale;
+        if let Ok(txs) = txs_res {
+            let bnb_outflow: U256 = txs.iter().filter(|tx| tx.from == target_address).fold(U256::zero(), |acc, tx| acc + tx.value);
+            let bnb_inflow: U256 = txs.iter().filter(|tx| tx.to == target_address).fold(U256::zero(), |acc, tx| acc + tx.value);
 
-        // add feature "fp-conversion" for primitive-types crate to use to_f64_lossy()
-        println!("Found {} transactions!", txs.len());
-        println!("BNB outflow: {} BNBs", bnb_outflow_f);
-        println!("BNB inflow: {} BNBs", bnb_inflow_f);
-        println!("BNB balance: {} BNBs", bnb_inflow_f - bnb_outflow_f);
+            let scale = 10_f64.powf(18.0);
+
+            let bnb_outflow_f = bnb_outflow.to_f64_lossy() / scale;
+            let bnb_inflow_f = bnb_inflow.to_f64_lossy() / scale;
+
+            // add feature "fp-conversion" for primitive-types crate to use to_f64_lossy()
+            println!("Found {} internal transactions!", txs.len());
+            println!("- BNB outflow: {} BNBs", bnb_outflow_f);
+            println!("- BNB inflow: {} BNBs", bnb_inflow_f);
+            println!("- BNB balance: {} BNBs", bnb_inflow_f - bnb_outflow_f);
+
+            bnb_balance = bnb_balance + (bnb_inflow_f - bnb_outflow_f);
+        }
     }
+
+    println!("");
+    println!("Total balance: {} BNBs", bnb_balance);
 }
