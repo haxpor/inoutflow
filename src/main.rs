@@ -279,7 +279,7 @@ where
 {
     let mut page_number = 1u8;
     let mut is_need_next_page = true;
-    const OFFSET: u64 = 1000;   // per request will get max txs
+    const OFFSET: usize = 1000;   // per request will get max txs
 
     let mut ret_txs: Vec::<R> = Vec::new();
 
@@ -320,8 +320,11 @@ where
                                     if c.len() == 0 {
                                         is_need_next_page = false;
                                     }
+                                    else if c.len() > 0 && c.len() < OFFSET {
+                                        ret_txs.append(&mut c);
+                                        is_need_next_page = false;
+                                    }
                                     else {
-                                        // merge into the resultant Vec
                                         ret_txs.append(&mut c);
                                     }
                                 },
