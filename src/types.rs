@@ -1,6 +1,7 @@
 use crate::deserialize::{de_string_to_numeric, de_string_to_U256, de_string_to_bool};
 
-use primitive_types::*;
+// also re-export U256 to other modules.
+pub use primitive_types::U256;
 
 /// Type of bscscan.com's API request
 pub enum BSCApiResponseType {

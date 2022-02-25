@@ -1,5 +1,6 @@
+use crate::types::U256;
+
 use serde::{Deserialize, Deserializer};
-use primitive_types::U256;
 
 pub fn de_string_to_bool<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where

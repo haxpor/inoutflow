@@ -3,7 +3,8 @@ mod deserialize;
 mod impls;
 mod bsc;
 
-use primitive_types::U256;
+// use re-exported type from `types` module.
+use types::U256;
 
 fn main() {
 	let args: Vec<String> = std::env::args().collect();
