@@ -24,7 +24,8 @@ pub struct BSCNormalTransactionResponseSuccessVariantResult {
 
     pub hash: String,
 
-    pub nonce: String,
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub nonce: u32,
 
     #[serde(deserialize_with = "de_string_to_numeric")]
     pub transaction_index: u64,
