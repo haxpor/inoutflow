@@ -104,6 +104,23 @@ pub struct BSCInternalTransactionResponseSuccessVariantResult {
     pub err_code: Option<String>
 }
 
+/// Structure that holds account balance
+#[derive(Debug, serde::Deserialize)]
+pub struct BSCBnbBalanceResponse {
+    pub status: String,
+    pub message: String,
+    pub result: GenericBSCBnbBalanceResponseResult,
+}
+
+/// Generic result for 'result' field of `BSCBnbBalanceResponse`.
+#[derive(Debug, serde::Deserialize)]
+#[serde(untagged)]
+pub enum GenericBSCBnbBalanceResponseResult {
+    #[serde(deserialize_with = "de_string_to_U256")]
+    Success(U256),
+    Failed(String)
+}
+
 /// Generic result as returned from `result` field from API response from bscscan.com
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(untagged)]
