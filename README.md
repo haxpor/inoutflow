@@ -12,6 +12,28 @@ It will involve utilizing 3 related APIs of [bscscan.com](https://bscscan.com) a
 in order to have an understanding of BNB in/out flow, and balance respectively for
 each type of transaction as well as final balance for entire address.
 
+# Technical Tips
+
+We can manually compute balance of target address ourselves without requesting
+to balance API by sum in/out flow of BNB from normal, and internal transactions,
+and subtract by fees from normal transactions.
+
+We have no need to try to get fees from internal transactions because internal
+transaction is part of normal transaction, and its `gasPrice` and `gasUsed` fields
+are not available as part of API returned. So only fees from normal transactions
+are enough.
+
+In short,
+
+```
+Address balance = in/out BNB flow of normal txs + in/out BNB flow of internal txs + fees of normal txs
+```
+
+**NOTE**: We have no need to involve BEP-20, and BEP-721 transactions here because
+they are also as part of normal transaction as they shared the same transaction hash.
+It just happens that for this type of transaction, it sends `0` BNBs but other tokens.
+So normal transactions' fees cover everything we need.
+
 # How to setup
 
 1. Register an account on [bscscan.com](https://bscscan.com)

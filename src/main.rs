@@ -82,9 +82,7 @@ fn main() {
     // get balance of the address
     // NOTE: we probably can prove our way to manually calculate the total balance
     // from in/out flow of normal and internal transactions, and gas fees in `normal` transactions.
-    //
-    // Address's balance **won't** take into account of fees in transactions of BEP-20, or BEP-721
-    // tokens.
+    // See README.md at `Technical Tips` section for more detail.
     {
         let balance_res = bsc::get_balance_address(target_address.as_str());
         if let Err(e) = balance_res {
