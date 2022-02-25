@@ -29,8 +29,10 @@ fn main() {
         }
 
         if let Ok(txs) = txs_res {
-            let bnb_outflow: U256 = txs.iter().filter(|tx| tx.from == target_address).fold(U256::zero(), |acc, tx| acc + tx.value);
-            let bnb_inflow: U256 = txs.iter().filter(|tx| tx.to == target_address).fold(U256::zero(), |acc, tx| acc + tx.value);
+            let bnb_outflow: U256 = txs.iter().filter(|tx| (tx.from == target_address) && !tx.is_error)
+                .fold(U256::zero(), |acc, tx| acc + tx.value);
+            let bnb_inflow: U256 = txs.iter().filter(|tx| (tx.to == target_address) && !tx.is_error)
+                .fold(U256::zero(), |acc, tx| acc + tx.value);
 
             let scale = 10_f64.powf(18.0);
 
@@ -58,8 +60,10 @@ fn main() {
         }
 
         if let Ok(txs) = txs_res {
-            let bnb_outflow: U256 = txs.iter().filter(|tx| tx.from == target_address).fold(U256::zero(), |acc, tx| acc + tx.value);
-            let bnb_inflow: U256 = txs.iter().filter(|tx| tx.to == target_address).fold(U256::zero(), |acc, tx| acc + tx.value);
+            let bnb_outflow: U256 = txs.iter().filter(|tx| tx.from == target_address && !tx.is_error)
+                .fold(U256::zero(), |acc, tx| acc + tx.value);
+            let bnb_inflow: U256 = txs.iter().filter(|tx| tx.to == target_address && !tx.is_error)
+                .fold(U256::zero(), |acc, tx| acc + tx.value);
 
             let scale = 10_f64.powf(18.0);
 
