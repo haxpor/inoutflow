@@ -4,7 +4,7 @@ mod impls;
 mod bsc;
 
 // use re-exported type from `types` module.
-use types::U256;
+use types::bsc_types::U256;
 
 fn main() {
 	let args: Vec<String> = std::env::args().collect();

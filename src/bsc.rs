@@ -1,4 +1,5 @@
 use crate::types::*;
+use crate::types::bsc_types::*;
 
 use isahc::prelude::*;
 use url::Url;

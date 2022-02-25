@@ -1,4 +1,4 @@
-use crate::types::U256;
+use crate::types::bsc_types::U256;
 
 use serde::{Deserialize, Deserializer};
 
