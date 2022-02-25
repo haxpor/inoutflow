@@ -9,6 +9,8 @@ pub enum BSCApiResponseType {
     InternalTransaction
 }
 
+/// Structure that holds information from API response from bscscan.com
+/// of normal transaction
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]  // source JSON response is in camelCase except
                                     // 'txreceipt_status' which we explicitly `rename` it.
@@ -59,6 +61,8 @@ pub struct BSCNormalTransactionResponseSuccessVariantResult {
     pub confirmations: u32,
 }
 
+/// Structure that holds information from API response from bscscan.com
+/// of internal transaction
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BSCInternalTransactionResponseSuccessVariantResult {
@@ -98,6 +102,7 @@ pub struct BSCInternalTransactionResponseSuccessVariantResult {
     pub err_code: Option<String>
 }
 
+/// Generic result as returned from `result` field from API response from bscscan.com
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(untagged)]
 pub enum GenericBSCTransactionResponseResult<T> {
@@ -105,6 +110,7 @@ pub enum GenericBSCTransactionResponseResult<T> {
     Failed(String)
 }
 
+/// Common structure which has shared fields for API response from bscscan.com.
 #[derive(Debug, serde::Deserialize)]
 pub struct BSCTransactionResponse<T> {
     pub status: String,
@@ -112,12 +118,16 @@ pub struct BSCTransactionResponse<T> {
     pub result: GenericBSCTransactionResponseResult::<T>,
 }
 
+/// Trait to satisfy implementing generic handling function for multiple API response
+/// within one function.
 pub trait CompatibleTransactionResponse<T> {
     fn status(&self) -> &str;
     fn message(&self) -> &str;
     fn result(&self) -> GenericBSCTransactionResponseResult::<T>;
 }
 
+/// Implementation of `CompatibleTransactionResponse` for
+/// `BSCNormalTransactionResponseSuccessVariantResult`.
 impl CompatibleTransactionResponse<BSCNormalTransactionResponseSuccessVariantResult> for BSCTransactionResponse<BSCNormalTransactionResponseSuccessVariantResult>
 {
     fn status(&self) -> &str {
@@ -133,6 +143,8 @@ impl CompatibleTransactionResponse<BSCNormalTransactionResponseSuccessVariantRes
     }
 }
 
+/// Implementation of `CompatibleTransactionResponse` for
+/// `BSCInternalTransactionResponseSuccessVariantResult`.
 impl CompatibleTransactionResponse<BSCInternalTransactionResponseSuccessVariantResult> for BSCTransactionResponse<BSCInternalTransactionResponseSuccessVariantResult>
 {
     fn status(&self) -> &str {
@@ -148,6 +160,7 @@ impl CompatibleTransactionResponse<BSCInternalTransactionResponseSuccessVariantR
     }
 }
 
+/// List of possible this program's error types.
 #[derive(Debug)]
 pub enum AppError {
     /// Internal error for generic error combined altogether

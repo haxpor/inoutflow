@@ -3,6 +3,10 @@ use crate::types::*;
 use isahc::prelude::*;
 use url::Url;
 
+/// Get list of normal transactions
+///
+/// # Arguments
+/// * `address` - target wallet or contract address to get list of normal transactions
 pub fn get_list_normal_transactions(address: &str) -> Result<Vec::<BSCNormalTransactionResponseSuccessVariantResult>, AppError>
 {
     type ResultType = BSCNormalTransactionResponseSuccessVariantResult;
@@ -11,6 +15,10 @@ pub fn get_list_normal_transactions(address: &str) -> Result<Vec::<BSCNormalTran
     get_list_transactions::<ResultType, JsonType>(BSCApiResponseType::NormalTransaction, address)
 }
 
+/// Get list of internal transactions
+///
+/// # Arguments
+/// * `address` - target wallet or contract address to get list of internal transactions
 pub fn get_list_internal_transactions(address: &str) -> Result<Vec::<BSCInternalTransactionResponseSuccessVariantResult>, AppError>
 {
     type ResultType = BSCInternalTransactionResponseSuccessVariantResult;
@@ -19,6 +27,8 @@ pub fn get_list_internal_transactions(address: &str) -> Result<Vec::<BSCInternal
     get_list_transactions::<ResultType, JsonType>(BSCApiResponseType::InternalTransaction, address)
 }
 
+/// Internal generic function supporting to get list of transactions for both
+/// normal and internal ones.
 fn get_list_transactions<R, J>(api_req_type: BSCApiResponseType, address: &str) -> Result<Vec::<R>, AppError>
 where
     R: serde::de::DeserializeOwned,

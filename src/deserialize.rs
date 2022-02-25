@@ -2,6 +2,7 @@ use crate::types::U256;
 
 use serde::{Deserialize, Deserializer};
 
+/// Deserializing function from `String` to `bool`.
 pub fn de_string_to_bool<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
     D: Deserializer<'de>
@@ -15,6 +16,9 @@ where
     }
 }
 
+/// Deserializing function from `String` to numeric which can be any integer type..
+///
+/// # Also see
 /// Look at example at https://serde.rs/stream-array.html
 pub fn de_string_to_numeric<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
@@ -27,6 +31,7 @@ where
     buf.parse::<T>().map_err(serde::de::Error::custom)
 }
 
+/// Deserializing function from `String` to `primitive_types::U256`.
 #[allow(non_snake_case)]
 pub fn de_string_to_U256<'de, D>(deserializer: D) -> Result<U256, D::Error>
 where
