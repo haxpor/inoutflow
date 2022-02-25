@@ -3,10 +3,11 @@ A command line program to compute and print out in/out flow of BNB of the target
 
 # How it works
 
-It will involve utilizing 2 related APIs of [bscscan.com](https://bscscan.com) as follows
+It will involve utilizing 3 related APIs of [bscscan.com](https://bscscan.com) as follows
 
 1. Get list of normal transactions - [link](https://docs.bscscan.com/api-endpoints/accounts#get-a-list-of-normal-transactions-by-address)
 2. Get list of internal transactions - [link](https://docs.bscscan.com/api-endpoints/accounts#get-a-list-of-internal-transactions-by-address)
+3. Get address's balance - [link](https://docs.bscscan.com/api-endpoints/accounts#get-bnb-balance-for-a-single-address)
 
 in order to have an understanding of BNB in/out flow, and balance respectively for
 each type of transaction as well as final balance for entire address.
@@ -28,17 +29,18 @@ inoutflow-bsc <target-address>
 Sample output is similar to following
 
 ```
-Found 436 transactions!
+Found 594 txs!
+- BNB outflow: 1837.683964544 BNBs
+- BNB inflow: 2.006 BNBs
+- Net in/out balance: -1835.677964544 BNBs
+
+Found 134 internal txs!
 - BNB outflow: 0 BNBs
-- BNB inflow: 10.03534257 BNBs
-- BNB balance: 10.03534257 BNBs
+- BNB inflow: 1836.96689 BNBs
+- Net in/out balance: 1836.96689 BNBs
 
-Found 2 internal transactions!
-- BNB outflow: 10.035 BNBs
-- BNB inflow: 0 BNBs
-- BNB balance: -10.035 BNBs
-
-Total balance: 0.0003425699999990428 BNBs
+Total 728 txs
+Total balance: 0.042507285 BNBs
 ```
 
 # License
