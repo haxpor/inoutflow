@@ -19,7 +19,8 @@ pub struct BSCNormalTransactionResponseSuccessVariantResult {
     pub block_number: u64,
 
     #[serde(deserialize_with = "de_string_to_numeric")]
-    pub time_stamp: u128,    
+    #[serde(rename = "timeStamp")]
+    pub timestamp: u128,
 
     pub hash: String,
 
@@ -70,7 +71,8 @@ pub struct BSCInternalTransactionResponseSuccessVariantResult {
     pub block_number: u64,
 
     #[serde(deserialize_with = "de_string_to_numeric")]
-    pub time_stamp: u128,
+    #[serde(rename = "timeStamp")]
+    pub timestamp: u128,
 
     pub hash: String,
 
