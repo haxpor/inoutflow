@@ -131,6 +131,10 @@ where
     Ok(ret_txs)
 }
 
+/// Get balance of specified address.
+///
+/// # Arguments
+/// * `address` - target wallet or contract address to get balance of
 pub fn get_balance_address(address: &str) -> Result<U256, AppError> {
     let api_key = std::env::var("HX_INOUTFLOW_API_KEY")?;
     let raw_url_str = format!("https://api.bscscan.com/api?module=account&action=balance&address={target_address}&apikey={api_key}", target_address=address, api_key=api_key);
@@ -171,4 +175,95 @@ pub fn get_balance_address(address: &str) -> Result<U256, AppError> {
             return Err(AppError::ErrorSendingHttpRequest);
         }
     }
+}
+
+/// Get BEP-20 transfer events for `address` API request.
+/// `address` API request means such `address` is on the receiving end of such
+/// token transfer.
+///
+/// __CAVEAT__: It usually returned with first transaction that doesn't have
+/// such address as the receiving end. Internally we will explicitly check
+/// against `from` field. So this will slow thing down a bit as we need to iterate
+/// the returned list for filtering again before returning.
+///
+/// # Arguments
+/// * `address` - target wallet address. It should not be contract address as
+///               internally it use `address` parameter to make a request.
+#[allow(dead_code)]
+pub fn get_bep20_transfer_events_a(address: &str) -> Result<Vec::<BSCBep20TokenTransferEventResponseSuccessVariantResult>, AppError> {
+    let api_key = std::env::var("HX_INOUTFLOW_API_KEY")?;
+
+    let mut page_number = 1u8;
+    let mut is_need_next_page = true;
+    const OFFSET: usize = 1000;   // per request will get max txs
+
+    let mut ret_txs: Vec::<BSCBep20TokenTransferEventResponseSuccessVariantResult> = Vec::new();
+ 
+    while is_need_next_page {
+        let raw_url_str = format!("https://api.bscscan.com/api?module=account&action=tokentx&address={target_address}&page={page}&offset={offset}&startblock=0&endblock=999999999&sort=asc&apikey={api_key}", target_address=address, page={page_number}, offset=OFFSET, api_key=api_key);
+
+        let url = Url::parse(&raw_url_str);
+        if let Err(_) = url {
+            return Err(AppError::ErrorInternalUrlParsing);
+        }
+
+        match isahc::get(url.unwrap().as_str()) {
+            Ok(mut res) => {
+                // early return for non-200 HTTP returned code
+                if res.status() != 200 {
+                    return Err(AppError::ErrorApiResponse(format!("Error API resonse, with HTTP {code} returned", code=res.status().as_str())));
+                }
+
+                match res.json::<BSCBep20TokenTransferEventResponse>() {
+                    Ok(json) => {
+                        if json.status == "1" {
+                            match json.result {
+                                GenericBSCBep20TokenTransferEventResponseResult::Success(mut c) => {
+                                    if c.len() == 0 {
+                                        is_need_next_page = false;
+                                    }
+                                    else if c.len() > 0 && c.len() < OFFSET {
+                                        ret_txs.append(&mut c);
+                                        is_need_next_page = false;
+                                    }
+                                    else {
+                                        ret_txs.append(&mut c);
+                                    }
+                                },
+                                // this case should not happen
+                                GenericBSCBep20TokenTransferEventResponseResult::Failed(msg) => {
+                                    return Err(AppError::ErrorApiResponse(format!("un-expected error for success case ({msg})", msg=msg)));
+                                }
+                            }
+                        }
+                        else {
+                            // exact text as returned when empty "result" is returned
+                            if json.message == "No transactions found" {
+                                break;
+                            }
+                            else {
+                                return Err(AppError::ErrorApiResponse(format!("message:{message}", message=json.message)));
+                            }
+                        }
+                    },
+                    Err(e) => {
+                        eprintln!("{:?}", e);
+                        return Err(AppError::ErrorJsonParsing(None));
+                    }
+                }
+            },
+            Err(_) => {
+                return Err(AppError::ErrorSendingHttpRequest);
+            }
+        }
+
+        if is_need_next_page {
+            page_number = page_number + 1;
+        }
+        else {
+            break;
+        }
+    }
+
+    Ok(ret_txs)
 }

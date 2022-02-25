@@ -179,3 +179,77 @@ impl CompatibleTransactionResponse<BSCInternalTransactionResponseSuccessVariantR
         self.result.clone()
     }
 }
+
+/// Structure holding returne API response of `result` field for BEP-20 tokens
+/// transfer events
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BSCBep20TokenTransferEventResponseSuccessVariantResult {
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub block_number: u64,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    #[serde(rename = "timeStamp")]
+    pub timestamp: u128,
+
+    pub hash: String,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub nonce: u32,
+
+    pub block_hash: String,
+
+    pub from: String,
+
+    pub contract_address: String,
+
+    pub to: String,
+
+    #[serde(deserialize_with = "de_string_to_U256")]
+    pub value: U256,
+
+    pub token_name: String,
+
+    pub token_symbol: String,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub token_decimal: u8,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub transaction_index: u64,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub gas: u64,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub gas_price: u64,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub gas_used: u64,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub cumulative_gas_used: u64,
+
+    pub input: String,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub confirmations: u32,
+}
+
+/// Structure holding information returned from API response for BEP-20 token
+/// transfer event.
+#[derive(Debug, serde::Deserialize)]
+pub struct BSCBep20TokenTransferEventResponse {
+    pub status: String,
+    pub message: String,
+    pub result: GenericBSCBep20TokenTransferEventResponseResult,
+}
+
+/// Structure holding variant of either success or failed returned for `result`
+/// field of API response for BEP-20 token transfer event.
+#[derive(Debug, serde::Deserialize)]
+#[serde(untagged)]
+pub enum GenericBSCBep20TokenTransferEventResponseResult {
+    Success(Vec::<BSCBep20TokenTransferEventResponseSuccessVariantResult>),
+    Failed(String)
+}
