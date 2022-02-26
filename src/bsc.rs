@@ -37,14 +37,27 @@ pub fn get_list_internal_transactions(address: &str) -> Result<Vec::<BSCInternal
 
 /// Internal generic function supporting to get list of transactions for both
 /// normal and internal ones.
+///
+/// __NOTE__: Get normal and internal transaction APIs are limited to maximum of
+/// 10,000 transactions per-se page * offset must be less than or equal to 10,000.
+/// So it doesn't make sense to use this API for address which has more than
+/// 10,000 transactions.
 fn get_list_transactions<R, J>(api_req_type: BSCApiResponseType, address: &str) -> Result<Vec::<R>, AppError>
 where
     R: serde::de::DeserializeOwned,
     J: CompatibleTransactionResponse::<R> + serde::de::DeserializeOwned
 {
-    let mut page_number = 1u8;
+    let mut page_number = 1usize;
     let mut is_need_next_page = true;
-    const OFFSET: usize = 1000;   // per request will get max txs
+
+    // with this number, we would max out at 5 pages
+    // which is reasonable as the free rate limit is 5 requests per seconds.
+    // It has high chance that < 5 requests will be made per seconds.
+    const OFFSET: usize = 2000;
+
+    // rate limit for free tier
+    // See https://docs.bscscan.com/support/rate-limits
+    const RATE_LIMIT: usize = 10_000;
 
     let mut ret_txs: Vec::<R> = Vec::new();
 
@@ -53,6 +66,11 @@ where
     let api_key = std::env::var("HX_INOUTFLOW_API_KEY")?;
 
     while is_need_next_page {
+        if page_number * OFFSET > RATE_LIMIT {
+            eprintln!("{}", format!("WARNING: Address has more than {txs_limit} txs limit!", txs_limit=RATE_LIMIT));
+            break;
+        }
+
         // beware to always use fully qualified here for type of api_req_type
         let action = match &api_req_type {
             BSCApiResponseType::NormalTransaction => "txlist",
@@ -73,8 +91,6 @@ where
                 }
 
                 // use the commented line, or just use what isahc provides conveniently
-                //match serde_json::from_str::<BSCNormalTransactionResponse>(res.text().unwrap().as_str()) {
-                //match res.json::<BSCNormalTransactionResponse>() {
                 match res.json::<J>() {
                     Ok(json) => {
                         if json.status() == "1" {
@@ -94,8 +110,15 @@ where
                                     }
                                 },
                                 // this case should not happen
-                                GenericBSCTransactionResponseResult::Failed(msg) => {
-                                    return Err(AppError::ErrorApiResponse(format!("un-expected error for success case ({msg})", msg=msg)));
+                                GenericBSCTransactionResponseResult::Failed(msg_opt) => {
+                                    match msg_opt {
+                                        Some(msg) => {
+                                            return Err(AppError::ErrorApiResponse(format!("un-expected error for success case ({msg})", msg=msg)));
+                                        },
+                                        None => {
+                                            return Err(AppError::ErrorApiResponse(format!("un-expected error for success case")));
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -105,7 +128,7 @@ where
                                 break;
                             }
                             else {
-                                return Err(AppError::ErrorApiResponse(format!("message:{message}", message=json.message())));
+                                return Err(AppError::ErrorApiResponse(format!("'{message}'", message=json.message())));
                             }
                         }
                     },
@@ -195,7 +218,7 @@ pub fn get_bep20_transfer_events_a(address: &str) -> Result<Vec::<BSCBep20TokenT
 
     let mut page_number = 1u8;
     let mut is_need_next_page = true;
-    const OFFSET: usize = 1000;   // per request will get max txs
+    const OFFSET: usize = 2000;
 
     let mut ret_txs: Vec::<BSCBep20TokenTransferEventResponseSuccessVariantResult> = Vec::new();
  
@@ -242,7 +265,7 @@ pub fn get_bep20_transfer_events_a(address: &str) -> Result<Vec::<BSCBep20TokenT
                                 break;
                             }
                             else {
-                                return Err(AppError::ErrorApiResponse(format!("message:{message}", message=json.message)));
+                                return Err(AppError::ErrorApiResponse(format!("'{message}'", message=json.message)));
                             }
                         }
                     },

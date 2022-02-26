@@ -127,7 +127,7 @@ pub enum GenericBSCBnbBalanceResponseResult {
 #[serde(untagged)]
 pub enum GenericBSCTransactionResponseResult<T> {
     Success(Vec::<T>),
-    Failed(String)
+    Failed(Option<String>)
 }
 
 /// Common structure which has shared fields for API response from bscscan.com.
