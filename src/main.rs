@@ -31,19 +31,24 @@ fn main() {
         if let Ok(txs) = txs_res {
             amount_normal_transactions = txs.len();
 
-            let bnb_outflow: U256 = txs.iter().filter(|tx| (tx.from == target_address) && !tx.is_error)
-                .fold(U256::zero(), |acc, tx| acc + tx.value);
-            let bnb_inflow: U256 = txs.iter().filter(|tx| (tx.to == target_address) && !tx.is_error)
-                .fold(U256::zero(), |acc, tx| acc + tx.value);
+            if amount_normal_transactions == 0 {
+                println!("Found 0 txs!");
+            }
+            else {
+                let bnb_outflow: U256 = txs.iter().filter(|tx| (tx.from == target_address) && !tx.is_error)
+                    .fold(U256::zero(), |acc, tx| acc + tx.value);
+                let bnb_inflow: U256 = txs.iter().filter(|tx| (tx.to == target_address) && !tx.is_error)
+                    .fold(U256::zero(), |acc, tx| acc + tx.value);
 
-            let bnb_outflow_f = bnb_outflow.to_f64_lossy() / bsc::BNB_SCALE_F;
-            let bnb_inflow_f = bnb_inflow.to_f64_lossy() / bsc::BNB_SCALE_F;
+                let bnb_outflow_f = bnb_outflow.to_f64_lossy() / bsc::BNB_SCALE_F;
+                let bnb_inflow_f = bnb_inflow.to_f64_lossy() / bsc::BNB_SCALE_F;
 
-            // add feature "fp-conversion" for primitive-types crate to use to_f64_lossy()
-            println!("Found {} txs!", txs.len());
-            println!("- BNB outflow: {} BNBs", bnb_outflow_f);
-            println!("- BNB inflow: {} BNBs", bnb_inflow_f);
-            println!("- Net in/out balance: {} BNBs", bnb_inflow_f - bnb_outflow_f);
+                // add feature "fp-conversion" for primitive-types crate to use to_f64_lossy()
+                println!("Found {} txs!", txs.len());
+                println!("- BNB outflow: {} BNBs", bnb_outflow_f);
+                println!("- BNB inflow: {} BNBs", bnb_inflow_f);
+                println!("- Net in/out balance: {} BNBs", bnb_inflow_f - bnb_outflow_f);
+            }
         }
     }
 
@@ -60,19 +65,24 @@ fn main() {
         if let Ok(txs) = txs_res {
             amount_internal_transactions = txs.len();
 
-            let bnb_outflow: U256 = txs.iter().filter(|tx| tx.from == target_address && !tx.is_error)
-                .fold(U256::zero(), |acc, tx| acc + tx.value);
-            let bnb_inflow: U256 = txs.iter().filter(|tx| tx.to == target_address && !tx.is_error)
-                .fold(U256::zero(), |acc, tx| acc + tx.value);
+            if amount_internal_transactions == 0 {
+                println!("Found 0 internal txs!");
+            }
+            else {
+                let bnb_outflow: U256 = txs.iter().filter(|tx| tx.from == target_address && !tx.is_error)
+                    .fold(U256::zero(), |acc, tx| acc + tx.value);
+                let bnb_inflow: U256 = txs.iter().filter(|tx| tx.to == target_address && !tx.is_error)
+                    .fold(U256::zero(), |acc, tx| acc + tx.value);
 
-            let bnb_outflow_f = bnb_outflow.to_f64_lossy() / bsc::BNB_SCALE_F;
-            let bnb_inflow_f = bnb_inflow.to_f64_lossy() / bsc::BNB_SCALE_F;
+                let bnb_outflow_f = bnb_outflow.to_f64_lossy() / bsc::BNB_SCALE_F;
+                let bnb_inflow_f = bnb_inflow.to_f64_lossy() / bsc::BNB_SCALE_F;
 
-            // add feature "fp-conversion" for primitive-types crate to use to_f64_lossy()
-            println!("Found {} internal txs!", txs.len());
-            println!("- BNB outflow: {} BNBs", bnb_outflow_f);
-            println!("- BNB inflow: {} BNBs", bnb_inflow_f);
-            println!("- Net in/out balance: {} BNBs", bnb_inflow_f - bnb_outflow_f);
+                // add feature "fp-conversion" for primitive-types crate to use to_f64_lossy()
+                println!("Found {} internal txs!", txs.len());
+                println!("- BNB outflow: {} BNBs", bnb_outflow_f);
+                println!("- BNB inflow: {} BNBs", bnb_inflow_f);
+                println!("- Net in/out balance: {} BNBs", bnb_inflow_f - bnb_outflow_f);
+            }
         }
     }
 
