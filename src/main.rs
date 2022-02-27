@@ -17,9 +17,6 @@ fn main() {
     let mut target_address = args[1].to_owned();
     target_address.make_ascii_lowercase();
 
-    let mut amount_normal_transactions = 0;
-    let mut amount_internal_transactions = 0;
-
     // get normal transactions
     {
         let txs_res = bsc::get_list_normal_transactions(target_address.as_str());
@@ -29,9 +26,7 @@ fn main() {
         }
 
         if let Ok(txs) = txs_res {
-            amount_normal_transactions = txs.len();
-
-            if amount_normal_transactions == 0 {
+            if txs.len() == 0 {
                 println!("Found 0 txs!");
             }
             else {
@@ -63,9 +58,7 @@ fn main() {
         }
 
         if let Ok(txs) = txs_res {
-            amount_internal_transactions = txs.len();
-
-            if amount_internal_transactions == 0 {
+            if txs.len() == 0 {
                 println!("Found 0 internal txs!");
             }
             else {
@@ -87,7 +80,6 @@ fn main() {
     }
 
     println!("");
-    println!("Total {} txs", amount_normal_transactions + amount_internal_transactions);
 
     // get balance of the address
     // NOTE: we probably can prove our way to manually calculate the total balance
