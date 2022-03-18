@@ -38,6 +38,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "bscscan"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcd6b943b6d6472eae4b4d59c5b133b7de47070b99184578ee539321da14f722"
+dependencies = [
+ "isahc",
+ "primitive-types",
+ "serde",
+ "serde_json",
+ "url",
+]
+
+[[package]]
 name = "byte-slice-cast"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -292,6 +305,7 @@ dependencies = [
 name = "inoutflow-bsc"
 version = "0.2.4"
 dependencies = [
+ "bscscan",
  "isahc",
  "primitive-types",
  "serde",

@@ -1,25 +1,23 @@
-mod types;
-mod deserialize;
-mod impls;
-mod bsc;
-
-// use re-exported type from `types` module.
-use types::bsc_types::U256;
+use ::bscscan::bscscan;
+use ::bscscan::environ::Context;
+use ::bscscan::prelude::*;
 
 fn main() {
 	let args: Vec<String> = std::env::args().collect();
 	if args.len() < 2 {
-		eprintln!("{}", types::AppError::ErrorNotEnoughArgumentsSuppliedAtCommandline(None));
-		eprintln!("Usage: {pkg_name} <target_address>", pkg_name=env!("CARGO_PKG_NAME"));
+		eprintln!("Usage: {pkg_name} <target_address>", pkg_name=env!("CARGO_PKG_NAME", "inoutflow-bsc"));
         std::process::exit(1);
 	}
 
     let mut target_address = args[1].to_owned();
     target_address.make_ascii_lowercase();
 
+    // create bscscan's context
+    let ctx = Context { api_key: std::env::var("HX_INOUTFLOW_API_KEY").expect("required 'HX_INOUTFLOW_API_KEY' environment variable to be defined") };
+
     // get normal transactions
     {
-        let txs_res = bsc::get_list_normal_transactions(target_address.as_str());
+        let txs_res = bscscan::accounts().get_list_normal_transactions(&ctx, target_address.as_str());
         if let Err(e) = txs_res {
             eprintln!("{}", e);
             std::process::exit(1);
@@ -35,8 +33,8 @@ fn main() {
                 let bnb_inflow: U256 = txs.iter().filter(|tx| (tx.to == target_address) && !tx.is_error)
                     .fold(U256::zero(), |acc, tx| acc + tx.value);
 
-                let bnb_outflow_f = bnb_outflow.to_f64_lossy() / bsc::BNB_SCALE_F;
-                let bnb_inflow_f = bnb_inflow.to_f64_lossy() / bsc::BNB_SCALE_F;
+                let bnb_outflow_f = bnb_outflow.to_f64_lossy() / bscscan::BNB_SCALE_F;
+                let bnb_inflow_f = bnb_inflow.to_f64_lossy() / bscscan::BNB_SCALE_F;
 
                 // add feature "fp-conversion" for primitive-types crate to use to_f64_lossy()
                 println!("Found {} txs!", txs.len());
@@ -51,7 +49,7 @@ fn main() {
 
     // get internal transactions
     {
-        let txs_res = bsc::get_list_internal_transactions(target_address.as_str());
+        let txs_res = bscscan::accounts().get_list_internal_transactions(&ctx, target_address.as_str());
         if let Err(e) = txs_res {
             eprintln!("{}", e);
             std::process::exit(1);
@@ -67,8 +65,8 @@ fn main() {
                 let bnb_inflow: U256 = txs.iter().filter(|tx| tx.to == target_address && !tx.is_error)
                     .fold(U256::zero(), |acc, tx| acc + tx.value);
 
-                let bnb_outflow_f = bnb_outflow.to_f64_lossy() / bsc::BNB_SCALE_F;
-                let bnb_inflow_f = bnb_inflow.to_f64_lossy() / bsc::BNB_SCALE_F;
+                let bnb_outflow_f = bnb_outflow.to_f64_lossy() / bscscan::BNB_SCALE_F;
+                let bnb_inflow_f = bnb_inflow.to_f64_lossy() / bscscan::BNB_SCALE_F;
 
                 // add feature "fp-conversion" for primitive-types crate to use to_f64_lossy()
                 println!("Found {} internal txs!", txs.len());
@@ -86,14 +84,14 @@ fn main() {
     // from in/out flow of normal and internal transactions, and gas fees in `normal` transactions.
     // See README.md at `Technical Tips` section for more detail.
     {
-        let balance_res = bsc::get_balance_address(target_address.as_str());
+        let balance_res = bscscan::accounts().get_balance_address(&ctx, target_address.as_str());
         if let Err(e) = balance_res {
             eprintln!("{}", e);
             std::process::exit(1);
         }
 
         if let Ok(balance) = balance_res {
-            println!("Total balance: {} BNBs", balance.to_f64_lossy() / bsc::BNB_SCALE_F);
+            println!("Total balance: {} BNBs", balance.to_f64_lossy() / bscscan::BNB_SCALE_F);
         }
     }
 }
