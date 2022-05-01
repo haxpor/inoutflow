@@ -1,6 +1,6 @@
 [package]
 name = "inoutflow-bsc"
-version = "0.2.5"
+version = "0.2.6"
 edition = "2021"
 authors = ["Wasin Thonkaew <wasin@wasin.io>"]
 description = "Command line program to calculate in/out flow of BNB for target address (either wallet or contract)"

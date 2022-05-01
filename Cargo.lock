@@ -313,7 +313,7 @@ dependencies = [
 
 [[package]]
 name = "inoutflow-bsc"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "bscscan",
  "isahc",
