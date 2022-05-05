@@ -1,14 +1,14 @@
 [package]
-name = "inoutflow-bsc"
-version = "0.2.6"
+name = "inoutflow"
+version = "1.0.0"
 edition = "2021"
 authors = ["Wasin Thonkaew <wasin@wasin.io>"]
-description = "Command line program to calculate in/out flow of BNB for target address (either wallet or contract)"
+description = "Command line program to calculate in/out flow of native tokens of EVM-based chains (BSC, Ethereum, and Polygon) for target wallet/contract address"
 license = "MIT"
-keywords = ["blockchain", "crypto", "bsc", "binance", "BNB"]
+keywords = ["blockchain", "crypto", "token-flow", "evm-chains", "native-token"]
 categories = ["command-line-utilities"]
 readme = "README.md"
-repository = "https://github.com/haxpor/inoutflow-bsc"
+repository = "https://github.com/haxpor/inoutflow"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -18,4 +18,6 @@ url = "2.2.2"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 primitive-types = { version = "0.11.1", features = ["impl-serde", "fp-conversion"] }
-bscscan = "0.5.1"
+evmscan = "0.6.0"
+regex = "1.5.5"
+clap = { version = "3.1.15", features = ["derive"] }
